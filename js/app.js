@@ -45,10 +45,27 @@ document.addEventListener('error', (e) => {
   if (el && el.tagName === 'IMG' && el.dataset.driveId && !el.dataset.retried) {
     el.dataset.retried = '1';
     el.src = driveImage(el.dataset.driveId, true);
+  } else if (el && el.tagName === 'IMG' && el.classList.contains('card-cover')) {
+    // La portada no cargó: se quita y la tarjeta vuelve a mostrar el icono.
+    const card = el.closest('.card');
+    if (card) card.classList.remove('has-cover');
+    el.remove();
   }
 }, true);
+// Portada de la tarjeta: la primera imagen que aparezca en el contenido de la página.
+const firstImage = (src) => {
+  const m = String(src || '').match(/!\[[^\]]*\]\(\s*<?([^)\s>]+)/);
+  if (!m) return null;
+  const id = driveId(m[1]);
+  if (id) return { src: driveImage(id), id };
+  return /^https?:\/\//i.test(m[1]) ? { src: m[1], id: '' } : null;
+};
 const excerpt = (src, n = 110) => {
-  const t = String(src || '').replace(/[#>*_`|\-\[\]()!]/g, ' ').replace(/\s+/g, ' ').trim();
+  const t = String(src || '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')        // imágenes
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')      // enlaces: deja solo el texto
+    .replace(/https?:\/\/\S+/g, ' ')              // direcciones sueltas
+    .replace(/[#>*_`|\-\[\]()!]/g, ' ').replace(/\s+/g, ' ').trim();
   return t.length > n ? t.slice(0, n).trimEnd() + '…' : t;
 };
 const go = (hash) => { location.hash = hash; };
@@ -100,14 +117,18 @@ document.getElementById('search-form').addEventListener('submit', (e) => {
 
 // ───────────────────────── vistas ─────────────────────────
 function cardGrid(nodes) {
-  return `<div class="grid">${nodes.map((n) => `
-    <a class="card" href="#/n/${esc(n.id)}">
+  return `<div class="grid">${nodes.map((n) => {
+    const cover = firstImage(n.content);
+    return `
+    <a class="card${cover ? ' has-cover' : ''}" href="#/n/${esc(n.id)}">
+      ${cover ? `<img class="card-cover" src="${esc(cover.src)}"${cover.id ? ` data-drive-id="${esc(cover.id)}"` : ''} alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
       <span class="card-icon">${icon(n)}</span>
       <span class="card-body">
         <strong>${esc(n.title)}</strong>
         <small>${esc(excerpt(n.content)) || '&nbsp;'}</small>
       </span>
-    </a>`).join('')}</div>`;
+    </a>`;
+  }).join('')}</div>`;
 }
 
 async function viewHome() {
