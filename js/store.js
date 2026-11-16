@@ -83,7 +83,9 @@ async function createFirebaseStore() {
       snap = await F.getDoc(ref);
     }
     const d = snap.data();
-    return { uid: u.uid, name: d.name, email: u.email, photo: u.photoURL, isAdmin: d.role === 'admin' };
+    const admins = (CONFIG.adminEmails || []).map(lower);
+    return { uid: u.uid, name: d.name, email: u.email, photo: u.photoURL,
+      isAdmin: d.role === 'admin' || (u.emailVerified && admins.includes(lower(u.email))) };
   }
 
   async function getNode(id) {
@@ -138,7 +140,7 @@ async function createFirebaseStore() {
 
 // ═════════════════════════ MODO DEMO ═════════════════════════
 function createLocalStore() {
-  const KEY = 'rr_demo_db';
+  const KEY = 'rr_demo_db_v2';
   const SESSION = 'rr_demo_session';
   let listeners = [];
 
@@ -153,27 +155,7 @@ function createLocalStore() {
   const delay = (v) => new Promise((r) => setTimeout(() => r(v), 60));
 
   function seed() {
-    const now = Date.now();
-    const author = { uid: 'demo-admin', name: 'Admin demo' };
     const d = { nodes: {} };
-    const add = (id, data, parent) => {
-      d.nodes[id] = { id, ...buildNode(data, author, parent), createdAt: now, updatedAt: now };
-      return d.nodes[id];
-    };
-    const mc = add('minecraft', { title: 'Minecraft', icon: '🧱',
-      content: 'Todo lo relacionado con la restauración y preservación de **Minecraft**: versiones antiguas, mods abandonados, mapas y herramientas.' });
-    const mods = add('mc-mods', { title: 'Mods', icon: '🧩',
-      content: 'Mods clásicos que ya no están disponibles o que necesitan ser portados a versiones nuevas.' }, mc);
-    add('mc-mod-ejemplo', { title: 'Mod de ejemplo', icon: '⚙️', openEdit: true,
-      content: [
-        '## Descripción', 'Esta es una página de ejemplo. Aquí iría toda la información del mod en concreto.', '',
-        '## Versiones', '| Versión del mod | Minecraft | Loader |', '|---|---|---|', '| 1.0.0 | 1.7.10 | Forge |', '',
-        '## Instalación', '1. Instala el loader correspondiente.', '2. Descarga el archivo desde la sección **Archivos**.', '3. Cópialo a la carpeta `mods/`.', '',
-        '> Los archivos se alojan en Google Drive, no en este sitio.',
-      ].join('\n') }, mods);
-    add('mc-versiones', { title: 'Versiones antiguas', icon: '📦', content: 'Alpha, Beta e Indev.' }, mc);
-    add('ps1', { title: 'PlayStation 1', icon: '🎮', content: 'Parches de traducción, restauración de contenido cortado y documentación.' });
-    add('herramientas', { title: 'Herramientas', icon: '🛠️', content: 'Utilidades de ingeniería inversa, extractores y editores.' });
     save(d);
     return d;
   }

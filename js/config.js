@@ -8,14 +8,18 @@ export const CONFIG = {
   siteName: 'RestoreGames',
   tagline: 'Restauración de videojuegos, mods y preservación digital',
 
+  // Cuentas de Google que son administradores (crean categorías principales,
+  // editan y borran cualquier página). Si cambias esto, cámbialo también en firestore.rules.
+  adminEmails: ['asuntosdcarlos@gmail.com'],
+
   // Firebase → Configuración del proyecto → Tus apps → App web
   firebase: {
-    apiKey: 'TU_API_KEY',
-    authDomain: 'TU_PROYECTO.firebaseapp.com',
-    projectId: 'TU_PROYECTO',
-    storageBucket: 'TU_PROYECTO.appspot.com',
-    messagingSenderId: '000000000000',
-    appId: 'TU_APP_ID',
+    apiKey: 'AIzaSyCU5OmlZd4S1an1sGLfqh0wgMxTHeAE6u0',
+    authDomain: 'restoregames-b66f3.firebaseapp.com',
+    projectId: 'restoregames-b66f3',
+    storageBucket: 'restoregames-b66f3.firebasestorage.app',
+    messagingSenderId: '270564238592',
+    appId: '1:270564238592:web:801d197703e17a28adbfe5',
   },
 
   // Google Cloud → APIs y servicios → Credenciales → ID de cliente OAuth (Aplicación web)
