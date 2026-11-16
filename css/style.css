@@ -96,6 +96,11 @@ label input { margin-top: 4px; }
 }
 .card:hover { border-color: var(--accent); transform: translateY(-2px); text-decoration: none; }
 .card-icon { font-size: 1.6rem; line-height: 1; }
+/* Tarjeta con imagen de portada (la primera imagen del contenido) */
+.card.has-cover { flex-direction: column; gap: 0; padding: 0; overflow: hidden; }
+.card.has-cover .card-icon { display: none; }
+.card.has-cover .card-body { padding: 12px 14px 14px; }
+.card-cover { display: block; width: 100%; aspect-ratio: 5 / 3; object-fit: cover; background: var(--bg-2); border-bottom: 1px solid var(--line); }
 .card-body { display: flex; flex-direction: column; min-width: 0; }
 .card-body small { color: var(--muted); font-size: .8rem; line-height: 1.4; margin-top: 4px; }
 
