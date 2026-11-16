@@ -18,7 +18,35 @@ const fmtSize = (b) => {
   while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
   return `${b.toFixed(i ? 1 : 0)} ${u[i]}`;
 };
-const md = (src) => window.DOMPurify.sanitize(window.marked.parse(src || ''), { ADD_ATTR: ['target'] });
+// Imágenes de Google Drive: un enlace normal de Drive abre una página, no la imagen.
+// driveId() saca el ID del archivo y md() lo cambia por una dirección que sí muestra la imagen.
+const driveId = (url) => {
+  const m = String(url || '').match(/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?(?:[^#]*&)?id=|uc\?(?:[^#]*&)?id=|thumbnail\?(?:[^#]*&)?id=)([\w-]{20,})/);
+  return m ? m[1] : null;
+};
+const driveImage = (id, alt = false) => alt
+  ? `https://drive.google.com/thumbnail?id=${id}&sz=w1600`
+  : `https://lh3.googleusercontent.com/d/${id}=w1600`;
+const md = (src) => {
+  const html = window.DOMPurify.sanitize(window.marked.parse(src || ''), { ADD_ATTR: ['target'] });
+  const box = document.createElement('template');
+  box.innerHTML = html;
+  box.content.querySelectorAll('img').forEach((img) => {
+    const id = driveId(img.getAttribute('src'));
+    if (id) { img.setAttribute('src', driveImage(id)); img.setAttribute('data-drive-id', id); }
+    img.setAttribute('loading', 'lazy');
+    img.setAttribute('referrerpolicy', 'no-referrer');
+  });
+  return box.innerHTML;
+};
+// Si la primera dirección de Drive falla, se prueba una vez con la alternativa.
+document.addEventListener('error', (e) => {
+  const el = e.target;
+  if (el && el.tagName === 'IMG' && el.dataset.driveId && !el.dataset.retried) {
+    el.dataset.retried = '1';
+    el.src = driveImage(el.dataset.driveId, true);
+  }
+}, true);
 const excerpt = (src, n = 110) => {
   const t = String(src || '').replace(/[#>*_`|\-\[\]()!]/g, ' ').replace(/\s+/g, ' ').trim();
   return t.length > n ? t.slice(0, n).trimEnd() + '…' : t;
@@ -202,7 +230,7 @@ async function viewEditor({ id = null, parentId = null }) {
       <div class="tabs">
         <button type="button" class="tab on" data-tab="write">Escribir</button>
         <button type="button" class="tab" data-tab="preview">Vista previa</button>
-        <span class="hint">Markdown: <code>## Título</code> <code>**negrita**</code> <code>- lista</code> <code>[enlace](url)</code> <code>| tabla |</code></span>
+        <span class="hint">Markdown: <code>## Título</code> <code>**negrita**</code> <code>- lista</code> <code>[enlace](url)</code> <code>![imagen](enlace de Drive)</code> <code>| tabla |</code></span>
       </div>
       <textarea name="content" rows="18" placeholder="Toda la información sobre este tema…">${esc(node?.content || '')}</textarea>
       <div class="prose preview" hidden></div>
